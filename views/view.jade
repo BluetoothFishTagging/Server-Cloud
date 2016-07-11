@@ -1,0 +1,19 @@
+//
+   Created by jamiecho on 7/11/16.
+mixin FileFormat(file)
+    tr
+        td
+            a(href=file.path, download)
+        td
+            p=file.description
+
+html(lang="en")
+    head
+        title FishTags-Test
+    body
+        table
+            tr
+                th file
+                th description
+            each file in files
+                +FileFormat(file)
