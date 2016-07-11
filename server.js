@@ -27,8 +27,10 @@ app.get('/', function(req,res){
     var params = {Bucket: 'uniquely-named-bucket', Key: 'random_stuff.txt'};
     var filepath = path.join(tmp_dir, 'random_stuff.txt');
     var ofs = fs.createWriteStream(filepath);
-    s3.getObject(params).createReadStream().pipe(ofs); // create file in ephemeral directory
-    res.render('view', {'files' : [{'path':filepath,'description':'some_description'}]});
+    var stream = s3.getObject(params).createReadStream().pipe(ofs); // create file in ephemeral directory
+    stream.on('finish',function(err){
+        res.render('view', {'files' : [{'path':filepath,'description':'some_description'}]});
+    });
     /*
     // TESTING MYSQL
     db.query('SELECT * FROM entries',function(err,rows){
