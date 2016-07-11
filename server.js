@@ -29,7 +29,7 @@ app.get('/', function(req,res){
     var ofs = fs.createWriteStream(filepath);
     var stream = s3.getObject(params).createReadStream().pipe(ofs); // create file in ephemeral directory
     stream.on('finish',function(err){
-        res.render('view', {'files' : [{'path':filepath,'description':'some_description'}]});
+        res.render('view', {'files' : [{'path':'random_stuff.txt','description':'some_description'}]});
     });
     /*
     // TESTING MYSQL
