@@ -89,3 +89,6 @@ tags
 npm-debug.log
 .DS_Store
 /*.env
+
+# AWS S3 KEY
+rootkey.csv
