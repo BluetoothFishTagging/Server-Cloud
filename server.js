@@ -23,7 +23,6 @@ app.use(express.static(tmp_dir)); //statically served files
 app.set('view engine', 'jade');
 
 function index(req, res) {
-
     // REAL CODE
     db.con.query('SELECT * FROM entries', function (err, rows) {
         if (err) {
@@ -57,32 +56,6 @@ function index(req, res) {
 
         }
     });
-
-    // TEST CODE
-
-    //// GET FILE FROM AWS S3 ...
-    //var params = {Bucket: 'uniquely-named-bucket', Key: 'random_stuff.txt'};
-    //var filepath = path.join(tmp_dir, 'random_stuff.txt');
-    //var ofs = fs.createWriteStream(filepath);
-    //var stream = s3.getObject(params).createReadStream().pipe(ofs); // create file in ephemeral directory
-    //stream.on('finish', function (err) {
-    //    //QUERY DB FROM AWS RDS-MySQL for record...
-    //    db.query('SELECT * FROM entries', function (err, rows) {
-    //        if (err) {
-    //            res.end("ERROR RETRIEVING DATA FROM DATABASE");
-    //        } else {
-    //            res.render('index', {'files': [{'path': 'random_stuff.txt', 'description': JSON.stringify(rows)}]});
-    //        }
-    //    });
-    //});
-    /*
-
-     // EVEN OLDER TEST CODE
-     db.query('SELECT * FROM entries',function(err,rows){
-     if(err)
-     throw err;
-     res.end(JSON.stringify(rows));
-     })*/
 }
 
 app.get('/', index);
@@ -156,12 +129,6 @@ app.post('/', function (req, res) {
                 }
             });
 
-            /*
-             // TESTING MYSQL
-             db.write(fields.personInfo, fields.tagInfo, files.photo, function () {
-             res.render('upload');
-             });
-             */
         } else {
             //set header, error handling, etc.
             res.end('ERROR PARSING FORM');
