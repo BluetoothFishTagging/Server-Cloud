@@ -4,9 +4,9 @@
 var mysql = require('mysql');
 
 var con = mysql.createConnection({
-    host     : 'localhost',
-    user     : 'root',
-    password : 'CheBellaC0sa',
+    host     : 'hitag-test-database.clahdngv3ody.us-east-1.rds.amazonaws.com',
+    user     : 'masteruser',
+    password : 'masterpw',
     database : 'testdb'
 });
 

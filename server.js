@@ -10,7 +10,7 @@ var fs = require('fs');
 var aws = require('aws-sdk');
 var s3 = new aws.S3();
 
-// var db = require('./db');
+var db = require('./db');
 
 var app = express();
 var tmp_dir = path.join(__dirname, 'tmp');
@@ -22,14 +22,21 @@ app.use(express.static(tmp_dir)); //statically served files
 app.set('view engine', 'jade');
 
 app.get('/', function(req,res){
-    //res.end('https://s3-us-west-2.amazonaws.com/uniquely-named-bucket/random_stuff.txt');
 
+    // GET FILE FROM AWS S3 ...
     var params = {Bucket: 'uniquely-named-bucket', Key: 'random_stuff.txt'};
     var filepath = path.join(tmp_dir, 'random_stuff.txt');
     var ofs = fs.createWriteStream(filepath);
     var stream = s3.getObject(params).createReadStream().pipe(ofs); // create file in ephemeral directory
     stream.on('finish',function(err){
-        res.render('view', {'files' : [{'path':'random_stuff.txt','description':'some_description'}]});
+        //QUERY DB FROM AWS RDS-MySQL for record...
+        db.query('SELECT * FROM entries',function(err,rows){
+            if(err){
+                res.end("ERROR RETRIEVING DATA FROM DATABASE");
+            }else{
+                res.render('view', {'files' : [{'path':'random_stuff.txt','description':JSON.stringify(rows)}]});
+            }
+        });
     });
     /*
     // TESTING MYSQL
