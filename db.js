@@ -25,9 +25,5 @@ con.connect(function(err){
     // before sending a COM_QUIT packet to the MySQL server.
 });*/
 
-function query(qstr, callback){
-    con.query(qstr, callback);
-}
-
-exports.query = query;
+exports.con = con;
 //exports.end = end;

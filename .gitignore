@@ -92,3 +92,6 @@ npm-debug.log
 
 # AWS S3 KEY
 rootkey.csv
+
+# TEMPORARIES
+tmp/
