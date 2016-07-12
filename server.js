@@ -34,7 +34,7 @@ app.get('/', function(req,res){
             if(err){
                 res.end("ERROR RETRIEVING DATA FROM DATABASE");
             }else{
-                res.render('view', {'files' : [{'path':'random_stuff.txt','description':JSON.stringify(rows)}]});
+                res.render('index', {'files' : [{'path':'random_stuff.txt','description':JSON.stringify(rows)}]});
             }
         });
     });
@@ -66,6 +66,30 @@ app.post('/', function(req,res){
             });
             */
         } else {
+            var filepath = path.join(tmp_dir, files.file);
+            var ifs = fs.createReadStream(filepath);
+            var params = {
+                Bucket: 'uniquely-named-bucket',
+                Key: files.file,
+                Body : ifs
+            };
+            s3.putObject(params,function(err){
+                if(err){
+                    res.end("ERROR UPLOADING DATA TO DATABASE");
+                }else{
+                    s3.listObjectsV2({Bucket : 'uniquely-named-bucket'},function(err,data){
+                        if(err){
+                            res.end("ERROR LISTING DATA FROM DATABASE");
+                        }else{
+                            res.end(JSON.stringify(data));
+
+                        }
+                        //res.render('index',{'files' : [{'path':'random_stuff.txt','description':JSON.stringify(rows)}]});
+                    })
+
+                }
+            });
+
             //set header, error handling, etc.
             res.end('ERROR');
         }
