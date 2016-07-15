@@ -24,29 +24,35 @@ app.set('view engine', 'jade');
 
 function index(req, res) {
     // REAL CODE
-    db.con.query('SELECT * FROM entries', function (err, rows) {
+    db.con.query('SELECT * FROM entries', function (err, entries) {
         if (err) {
             res.end("ERROR RETRIEVING ENTRIES FROM DATABASE");
         } else {
             //retrieved entries successfully
-            async.each(rows,
-                function (row, done) {
-                    var key = row.file;
+            async.each(entries,
+                function (entry, done) {
+                    var key = entry.file;
                     var params = {Bucket: 'uniquely-named-bucket', Key: key};
                     var filepath = path.join(tmp_dir, key);
-                    var ofs = fs.createWriteStream(filepath);
-                    s3.getObject(params).createReadStream().pipe(ofs).on('finish', function(err){
-                        if(err){
-                            console.log("ERROR CREATING OBJECT", key, "FROM FILESYSTEM");
-                        }
+                    if(fs.existsSync(filepath)){
+                        console.log("already exists");
+                        // no need to create in the filesystem again.
                         done();
-                    });
+                    }else{
+                        var ofs = fs.createWriteStream(filepath);
+                        s3.getObject(params).createReadStream().pipe(ofs).on('finish', function(err){
+                            if(err){
+                                console.log("ERROR CREATING OBJECT", key, "FROM FILESYSTEM");
+                            }
+                            done();
+                        });
+                    }
                 },
                 function (err, cb) {
                     if (err) {
                         res.end("ERROR GETTING OBJECTS FROM FILESYSTEM");
                     } else {
-                        var files = rows.map(function (e, i) {
+                        var files = entries.map(function (e) {
                             return {'path': e.file, 'description': e.description};
                         });
                         //
