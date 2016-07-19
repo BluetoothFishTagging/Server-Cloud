@@ -1,0 +1,54 @@
+
+//
+   Created by jamiecho on 7/18/16.
+mixin inputFormat(type,name,value)
+   tr
+      td
+         p=name
+      td
+         input(type=type,name=name,value=value)
+
+html(lang="en")
+   head
+      title FishTags-Signup
+
+      script(src="http://ajax.googleapis.com/ajax/libs/jquery/1/jquery.min.js")
+      script(src="http://ajax.aspnetcdn.com/ajax/jquery.validate/1.9/jquery.validate.min.js")
+
+      script.
+         $(document).ready(function () {
+            $('#signup').validate({ // initialize the plugin
+               rules: {
+                  username: {
+                     required: true
+                  },
+                  passcode: {
+                     required: true
+                  },
+                  passcode_confirm: {
+                     required: true,
+                     equalTo: '[name="passcode"]'
+                  },
+                  email: {
+                     required:false,
+                     email:true
+                  }
+               }
+            });
+         });
+   body
+      div
+            br
+         form(id="signup", method="POST", onsubmit="return validateForm()")
+            table
+               +inputFormat('text','username')
+               +inputFormat('password','passcode')
+               +inputFormat('password','passcode_confirm')
+               +inputFormat('text','name')
+               +inputFormat('email','email')
+               +inputFormat('number','phone')
+               +inputFormat('text','address')
+               +inputFormat('text','city')
+               +inputFormat('text','state')
+               +inputFormat('text','zipcode')
+               +inputFormat('submit','signup','Sign Up')

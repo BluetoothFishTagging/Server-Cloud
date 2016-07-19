@@ -7,7 +7,7 @@ var con = mysql.createConnection({
     host     : 'hitag-test-database.clahdngv3ody.us-east-1.rds.amazonaws.com',
     user     : 'masteruser',
     password : 'masterpw',
-    database : 'testdb'
+    database : 'hitagdb'
 });
 
 con.connect(function(err){

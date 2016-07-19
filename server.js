@@ -2,13 +2,18 @@
  * Created by jamiecho on 7/8/16.
  */
 
+
 var express = require('express');
 var formidable = require('formidable');
 var bodyparser = require('body-parser');
+var cookieParser = require('cookie-parser');
 var path = require('path');
 var fs = require('fs');
 var aws = require('aws-sdk');
-var s3 = new aws.S3();
+var session = require('express-session');
+var bucket = 'hitag-fs';
+var s3 = new aws.S3({Bucket: bucket});
+
 var async = require('async');
 
 var db = require('./db');
@@ -18,30 +23,48 @@ var tmp_dir = path.join(__dirname, 'tmp');
 
 //boilerplate initialization
 app.use(bodyparser.json());
+app.use(cookieParser());
 app.use(express.static(tmp_dir)); //statically served files
 //this will be the location of the files
+
+app.use(session({
+    secret: 'TunaDr3ams',
+    resave: false,
+    saveUninitialized: true,
+}));
+
 app.set('view engine', 'jade');
 
-function index(req, res) {
+function checkLogin(req, res, next) {
+    if (!req.session.userid) {
+        res.redirect('/login');
+    } else {
+        next();
+    }
+}
+
+app.get('/', checkLogin, function (req, res) {
     // REAL CODE
-    db.con.query('SELECT * FROM entries', function (err, entries) {
+    db.con.query('SELECT * FROM webview WHERE p_id = ?', req.session.userid, function (err, entries) {
         if (err) {
             res.end("ERROR RETRIEVING ENTRIES FROM DATABASE");
         } else {
-            //retrieved entries successfully
             async.each(entries,
                 function (entry, done) {
-                    var key = entry.file;
-                    var params = {Bucket: 'uniquely-named-bucket', Key: key};
+                    var key = entry.photo;
+                    var params = {
+                        Bucket: bucket,
+                        Key: key
+                    };
                     var filepath = path.join(tmp_dir, key);
-                    if(fs.existsSync(filepath)){
+                    if (fs.existsSync(filepath)) {
                         console.log("already exists");
                         // no need to create in the filesystem again.
                         done();
-                    }else{
+                    } else {
                         var ofs = fs.createWriteStream(filepath);
-                        s3.getObject(params).createReadStream().pipe(ofs).on('finish', function(err){
-                            if(err){
+                        s3.getObject(params).createReadStream().pipe(ofs).on('finish', function (err) {
+                            if (err) {
                                 console.log("ERROR CREATING OBJECT", key, "FROM FILESYSTEM");
                             }
                             done();
@@ -52,94 +75,183 @@ function index(req, res) {
                     if (err) {
                         res.end("ERROR GETTING OBJECTS FROM FILESYSTEM");
                     } else {
-                        var files = entries.map(function (e) {
-                            return {'path': e.file, 'description': e.description};
-                        });
-                        //
-                        res.render('index', {'files': files});
+                        res.render('index', {'entries': entries});
                     }
                 });
 
         }
     });
-}
+});
 
-app.get('/', index);
+function createEntry(entry, req, res){
 
-function listAllKeys(marker, keys, cb) {
-    s3.listObjects({Bucket: 'uniquely-named-bucket', Marker: marker}, function (err, data) {
+    var ifs = fs.createReadStream(path.join(tmp_dir, entry.photo));
+
+    var options = {partSize: 10 * 1024 * 1024, queueSize: 1};
+    var params = {
+        Bucket: bucket,
+        Key: entry.photo,
+        Body: ifs
+    };
+
+    db.con.query('INSERT INTO entries SET ?', entry, function (err, result) {
+        console.log('INSERTED ...');
         if (err) {
-            cb(err);
+            res.end("ERROR UPLOADING ENTRY TO DATABASE");
         } else {
-            for (idx in data.Contents) {
-                keys.push(data.Contents[idx].Key);
-            }
 
-            if (data.IsTruncated)
-                listAllKeys(data.NextMarker, keys, cb);
-            else
-                cb();//end of objets
-        }
-
-    });
-}
-
-app.post('/', function (req, res) {
-    var form = new formidable.IncomingForm();
-    form.uploadDir = __dirname + '/tmp';
-    form.keepExtensions = true;
-
-    form.parse(req, function (err, fields, files) {
-        if (!err) {
-
-            console.log(fields);
-
-
-            var file = files.file;
-
-            console.log(file);
-
-            var ifs = fs.createReadStream(file.path);
-
-            var params = {
-                Bucket: 'uniquely-named-bucket',
-                Key: file.name,
-                Body: ifs
-            };
-            var options = {partSize: 10*1024*1024, queueSize: 1};
-
-            var entry = {
-                'file': file.name,
-                'description': fields.description
-            };
-
-            console.log(entry);
-            console.log("BEGINNING QUERY ... ");
-
-            db.con.query('INSERT INTO entries SET ?', entry, function (err, result) {
-                console.log('INSERTED ...');
-                if(err){
-                    res.end("ERROR UPLOADING ENTRY TO DATABASE");
-                }else{
-
-                    s3.upload(params, options, function(err, data) {
-                        console.log("PUT OBJECT ...");
-                        if (err) {
-                            res.end("ERROR UPLOADING FILE TO FILESYSTEM");
-                        } else {
-                            console.log("successfully put object!!");
-                            //file is up in the filesystem, all is good
-                            index(req,res);
-                        }
-                    });
+            s3.upload(params, options, function (err, data) {
+                console.log("PUT OBJECT ...");
+                if (err) {
+                    console.log(err);
+                    res.end("ERROR UPLOADING FILE TO FILESYSTEM");
+                } else {
+                    console.log("successfully put object!!");
+                    //file is up in the filesystem, all is good
+                    res.redirect('/');
                 }
             });
+        }
+    });
+}
+app.get('/upload', checkLogin, function(req,res){
+    res.render('upload');
+});
 
+app.post('/upload', function (req, res) {
+    //repurpose for schema
+    var form = new formidable.IncomingForm();
+    form.uploadDir = tmp_dir;
+    form.keepExtensions = true;
+
+    form.on('file', function(field, file) {
+        //rename the incoming file to the file's name
+        fs.rename(file.path, path.join(tmp_dir, file.name));
+    });
+
+    form.parse(req, function (err, fields, files) {
+
+        var entry = {
+            photo : files.photo.name,
+            location : fields.location,
+            time : fields.time,
+            comments : fields.comments
+        };
+
+        if (!err) {
+            db.con.query('SELECT * from persons where username = ? and passcode = ?', [fields.username, fields.passcode], function(err,result){
+                //check if user exists ...
+                if(!err && result != undefined && result.length > 0){
+                    entry.p_id = result[0].id;
+
+                   //search existing tag
+                   db.con.query('SELECT id from tags where countryID = ?', fields.countryID, function(err,result){
+
+                       if(!err && result != undefined && result.length > 0){
+                           //tag exists
+                           entry.t_id = result[0].id;
+                           //create entry
+                           createEntry(entry, req,res);
+                       }else{
+                           var tag = {
+                               countryID : fields.countryID,
+                               nationalID : fields.nationalID,
+                               comments : fields.comments
+                           };
+                           //tag does not exist, first create tag...
+                           db.con.query('INSERT INTO tags SET ?',tag,function(err,result){
+                               entry.t_id = result.insertId;
+                               //then create entry
+                               createEntry(entry,req,res);
+                           });
+                       }
+                   });
+               }else{
+                   res.end('AUTHORIZATION FAILED');
+               }
+
+            });
         } else {
             //set header, error handling, etc.
             res.end('ERROR PARSING FORM');
         }
     });
+});
+
+
+function createUser(user, cb) {
+    delete user.passcode_confirm;
+    delete user.signup;
+
+    db.con.query('INSERT INTO persons SET ?', user, function(err,res){
+        console.log(user);
+        console.log("CREATE USER :: ");
+        console.log(res);
+        console.log(err);
+        console.log(res.insertId);
+        cb(err, res.insertId);
+    });
+}
+
+function findUser(username, passcode, cb) {
+    db.con.query('SELECT passcode, id from persons WHERE username = ?', username, function(err,res){
+        console.log(res);
+        var unok = false, pcok = false, id;
+        if(res != undefined && res.length > 0){
+            unok = true;
+            if(passcode == res[0].passcode){
+                pcok = true;
+                id = res[0].id;
+            }
+        }
+
+        cb(unok, pcok, id);
+    });
+}
+
+app.get('/login',function(req,res){
+    res.render('login');
+});
+
+app.post('/login', function (req, res) {
+    var form = new formidable.IncomingForm();
+    form.parse(req, function (err, fields, files) {
+        console.log(fields);
+        findUser(fields.username, fields.passcode, function (unok, pcok, id) {
+            console.log(unok, pcok, id);
+            if(unok){
+                if(pcok){
+                    req.session.userid = id;
+                    res.redirect('/');
+                }else{
+                    res.render('login',{wrong:true}); //todo: special handling about 'wrong'
+                }
+            }else{
+                res.redirect('/signup');
+            }
+        });
+    });
+
+});
+
+app.get('/signup',function(req,res){
+    res.render('signup');
+});
+
+app.post('/signup',function(req,res){
+    var form = new formidable.IncomingForm();
+    form.parse(req,function(err,fields,files){
+        createUser(fields,function(err,id){
+            if(err){
+                res.end("ERROR : SIGNUP FAILED");
+            }else{
+                req.session.userid = id;
+                res.redirect('/');
+            }
+        });
+    });
+    //TO IMPLEMENT -- send credentials to database
+
 });
 
 var port = process.env.PORT || 8000;

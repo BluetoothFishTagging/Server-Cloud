@@ -1,0 +1,28 @@
+//
+   Created by jamiecho on 7/19/16.
+mixin inputFormat(type,name,value)
+   tr
+      th
+         p=name
+      td
+         input(type=type,name=name,value=value)
+
+html(lang="en")
+   head
+      title FishTags-Upload
+   body
+      div
+         form(method="POST", enctype="multipart/form-data")
+            table
+               +inputFormat('text','username')
+               +inputFormat('text','passcode')
+               +inputFormat('file','photo')
+               +inputFormat('text','location')
+               +inputFormat('datetime-local','time')
+               +inputFormat('text','comments')
+               +inputFormat('text','countryID')
+               +inputFormat('text','nationalID')
+               +inputFormat('text','tag_comments')
+               tr
+                  td(colspan=2)
+                     input(type='submit',name='SUBMIT',value='Submit')

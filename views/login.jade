@@ -1,0 +1,39 @@
+//
+   Created by jamiecho on 7/18/16.
+
+html(lang="en")
+    head
+        title FishTags-Login
+
+        script(src="http://ajax.googleapis.com/ajax/libs/jquery/1/jquery.min.js")
+
+        script(src="http://ajax.aspnetcdn.com/ajax/jquery.validate/1.9/jquery.validate.min.js")
+        script.
+            $(document).ready(function () {
+                $('#signup').validate({ // initialize the plugin
+                    rules: {
+                        username: {
+                            required: true
+                        },
+                        passcode: {
+                            required: true
+                        }
+                    }
+                });
+            });
+    body
+        div
+            p Please Log in!
+                br
+            form(method="POST")
+                table
+                    tr
+                        td
+                            input(type='text',name='username',value='')
+                            //username
+                    tr
+                        td
+                            input(type='password',name='passcode',value='')
+                    tr
+                        td
+                            input(type='submit',name='SUBMIT',value='Submit')

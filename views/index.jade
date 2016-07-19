@@ -1,11 +1,15 @@
 //
    Created by jamiecho on 7/11/16.
-mixin FileFormat(file)
+
+- var fields = ['countryID','nationalID','location','time','comments','name','email','phone','address','city','state','zipcode'];
+
+mixin EntryFormat(entry)
     tr
         td
-            a(href=file.path, download) #{file.path}
-        td
-            p=file.description
+            image(src=entry.photo width="300px",height="300")
+        each field in fields
+            td
+                p=entry[field]
 
 html(lang="en")
     head
@@ -16,18 +20,10 @@ html(lang="en")
             }
     body
         div
-            form(method="POST", enctype="multipart/form-data")
-                table
-                    tr
-                        th file
-                        th description
-                    each file in files
-                        +FileFormat(file)
-                    tr
-                        td
-                            input(type='file',name='file')
-                        td
-                            input(type='text',name='description')
-                    tr
-                        td(colspan=2, align='center')
-                            input(type='submit',name='SUBMIT',value='Submit')
+            table
+                tr
+                    th photo
+                    each field in fields
+                        th #{field}
+                each entry in entries
+                    +EntryFormat(entry)
