@@ -36,10 +36,15 @@ html(lang="en")
                }
             });
          });
+
+         function onSubmit(){
+            return validateForm();
+         }
+
    body
       div
             br
-         form(id="signup", method="POST", onsubmit="return validateForm()")
+         form(id="signup", method="POST", onsubmit="onSubmit()")
             table
                +inputFormat('text','username')
                +inputFormat('password','passcode')

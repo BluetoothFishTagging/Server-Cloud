@@ -37,7 +37,7 @@ app.set('view engine', 'jade');
 
 function checkLogin(req, res, next) {
     if (!req.session.userid) {
-        res.redirect('/login');
+        res.redirect('/login?dest=' + req.url);
     } else {
         next();
     }
@@ -145,8 +145,7 @@ app.post('/upload', function (req, res) {
                     entry.p_id = result[0].id;
 
                    //search existing tag
-                   db.con.query('SELECT id from tags where countryID = ?', fields.countryID, function(err,result){
-
+                   db.con.query('SELECT id from tags where nationalID = ?', fields.nationalID, function(err,result){
                        if(!err && result != undefined && result.length > 0){
                            //tag exists
                            entry.t_id = result[0].id;
@@ -182,15 +181,19 @@ app.post('/upload', function (req, res) {
 function createUser(user, cb) {
     delete user.passcode_confirm;
     delete user.signup;
-
-    db.con.query('INSERT INTO persons SET ?', user, function(err,res){
-        console.log(user);
-        console.log("CREATE USER :: ");
-        console.log(res);
-        console.log(err);
-        console.log(res.insertId);
-        cb(err, res.insertId);
+    db.con.query('SELECT * from persons WHERE username = ?', user.username, function(err,res){
+        if(res != undefined && res.length > 0){
+            cb(err,-1);
+            //username already exists
+        }else{
+            db.con.query('INSERT INTO persons SET ?', user, function(err,res){
+                console.log(err);
+                console.log(res.insertId);
+                cb(err, res.insertId);
+            });
+        }
     });
+
 }
 
 function findUser(username, passcode, cb) {
@@ -222,7 +225,11 @@ app.post('/login', function (req, res) {
             if(unok){
                 if(pcok){
                     req.session.userid = id;
-                    res.redirect('/');
+                    if(req.query.dest){
+                        res.redirect(req.query.dest);
+                    }else{
+                        res.redirect('/');
+                    }
                 }else{
                     res.render('login',{wrong:true}); //todo: special handling about 'wrong'
                 }
@@ -245,8 +252,12 @@ app.post('/signup',function(req,res){
             if(err){
                 res.end("ERROR : SIGNUP FAILED");
             }else{
-                req.session.userid = id;
-                res.redirect('/');
+                if(id == -1){
+                    res.end("ERROR : USERNAME ALREADY EXISTS");
+                }else{
+                    req.session.userid = id;
+                    res.redirect('/');
+                }
             }
         });
     });
