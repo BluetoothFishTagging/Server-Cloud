@@ -4,9 +4,13 @@ layout: template
 filename: index
 ---
 
-# HI-Tags Server with MySQL Backend 
+## HI-Tags Server with MySQL Backend 
 
-## Features
+### Website
+
+- ![Web UI](images/website.png)
+
+### Features
 - [Accounts](accounts)
 - [MySQL](mysql)
 - [AWS S3](aws_s3)

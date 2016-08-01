@@ -1,4 +1,40 @@
-# Created by https://www.gitignore.io/api/webstorm,vim,linux,git
+# Created by https://www.gitignore.io/api/git,vim,linux,jekyll,webstorm
+
+### Git ###
+*.orig
+
+
+### Vim ###
+# swap
+[._]*.s[a-w][a-z]
+[._]s[a-w][a-z]
+# session
+Session.vim
+# temporary
+.netrwhist
+*~
+# auto-generated tag files
+tags
+
+
+### Linux ###
+*~
+
+# temporary files which can be created if a process still has a handle open of a deleted file
+.fuse_hidden*
+
+# KDE directory preferences
+.directory
+
+# Linux trash folder which might appear on any partition or disk
+.Trash-*
+
+
+### Jekyll ###
+_site/
+.sass-cache/
+.jekyll-metadata
+
 
 ### WebStorm ###
 # Covers JetBrains IDEs: IntelliJ, RubyMine, PhpStorm, AppCode, PyCharm, CLion, Android Studio and Webstorm
@@ -54,44 +90,12 @@ fabric.properties
 # .idea/misc.xml 
 # *.ipr
 
-
-### Vim ###
-# swap
-[._]*.s[a-w][a-z]
-[._]s[a-w][a-z]
-# session
-Session.vim
-# temporary
-.netrwhist
-*~
-# auto-generated tag files
-tags
-
-
-### Linux ###
-*~
-
-# temporary files which can be created if a process still has a handle open of a deleted file
-.fuse_hidden*
-
-# KDE directory preferences
-.directory
-
-# Linux trash folder which might appear on any partition or disk
-.Trash-*
-
-
-### Git ###
-*.orig
-
 ### BUILD ARTIFACTS
 /node_modules
 npm-debug.log
 .DS_Store
 /*.env
-
+tmp/
 # AWS S3 KEY
 rootkey.csv
 
-# TEMPORARIES
-tmp/
