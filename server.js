@@ -43,44 +43,56 @@ function checkLogin(req, res, next) {
     }
 }
 
+function handleWebview(err,entries,res){
+    if (err) {
+        res.end("ERROR RETRIEVING ENTRIES FROM DATABASE");
+    } else {
+        async.each(entries,
+            function (entry, done) {
+                var key = entry.photo;
+                var params = {
+                    Bucket: bucket,
+                    Key: key
+                };
+                var filepath = path.join(tmp_dir, key);
+                if (fs.existsSync(filepath)) {
+                    console.log("already exists");
+                    // no need to create in the filesystem again.
+                    done();
+                } else {
+                    var ofs = fs.createWriteStream(filepath);
+                    s3.getObject(params).createReadStream().pipe(ofs).on('finish', function (err) {
+                        if (err) {
+                            console.log("ERROR CREATING OBJECT", key, "FROM FILESYSTEM");
+                        }
+                        done();
+                    });
+                }
+            },
+            function (err, cb) {
+                if (err) {
+                    res.end("ERROR GETTING OBJECTS FROM FILESYSTEM");
+                } else {
+                    res.render('index', {'entries': entries});
+                }
+            });
+
+    }
+}
+
 app.get('/', checkLogin, function (req, res) {
     // REAL CODE
-    db.con.query('SELECT * FROM webview WHERE p_id = ?', req.session.userid, function (err, entries) {
-        if (err) {
-            res.end("ERROR RETRIEVING ENTRIES FROM DATABASE");
-        } else {
-            async.each(entries,
-                function (entry, done) {
-                    var key = entry.photo;
-                    var params = {
-                        Bucket: bucket,
-                        Key: key
-                    };
-                    var filepath = path.join(tmp_dir, key);
-                    if (fs.existsSync(filepath)) {
-                        console.log("already exists");
-                        // no need to create in the filesystem again.
-                        done();
-                    } else {
-                        var ofs = fs.createWriteStream(filepath);
-                        s3.getObject(params).createReadStream().pipe(ofs).on('finish', function (err) {
-                            if (err) {
-                                console.log("ERROR CREATING OBJECT", key, "FROM FILESYSTEM");
-                            }
-                            done();
-                        });
-                    }
-                },
-                function (err, cb) {
-                    if (err) {
-                        res.end("ERROR GETTING OBJECTS FROM FILESYSTEM");
-                    } else {
-                        res.render('index', {'entries': entries});
-                    }
-                });
 
-        }
-    });
+    if(req.session.userid == -1){ //admin
+        db.con.query('SELECT * FROM webview', function(err,entries){
+            handleWebview(err,entries,res);
+        })
+    }else{
+        db.con.query('SELECT * FROM webview WHERE p_id = ?', req.session.userid, function (err, entries) {
+            handleWebview(err,entries,res);
+        });
+    }
+
 });
 
 function createEntry(entry, req, res){
@@ -139,7 +151,7 @@ app.post('/upload', function (req, res) {
         };
 
         if (!err) {
-            db.con.query('SELECT * from persons where username = ? and passcode = ?', [fields.username, fields.passcode], function(err,result){
+            db.con.query("SELECT * from persons where username = ? and passcode = AES_ENCRYPT(?,'TunaDr3ams')", [fields.username, fields.passcode], function(err,result){
                 //check if user exists ...
                 if(!err && result != undefined && result.length > 0){
                     entry.p_id = result[0].id;
@@ -197,18 +209,27 @@ function createUser(user, cb) {
 }
 
 function findUser(username, passcode, cb) {
-    db.con.query('SELECT passcode, id from persons WHERE username = ?', username, function(err,res){
+    db.con.query('SELECT EXISTS(SELECT * from persons WHERE username = ?) as `exists`', username, function(err,res){
         console.log(res);
-        var unok = false, pcok = false, id;
-        if(res != undefined && res.length > 0){
-            unok = true;
-            if(passcode == res[0].passcode){
-                pcok = true;
-                id = res[0].id;
-            }
-        }
 
-        cb(unok, pcok, id);
+        var unok = false,
+            pcok = false,
+            id = null;
+
+        if(res != undefined && res.length > 0 && res[0].exists){
+            unok = true; //username exists
+            console.log("????");
+            db.con.query("SELECT id from persons WHERE username = ? AND passcode = AES_ENCRYPT(?,'TunaDr3ams')", [username, passcode], function(err,res){
+                console.log(err,res);
+                if(!err && res != undefined && res.length > 0){
+                    pcok = true;
+                    id = res[0].id;
+                }
+                console.log(unok, pcok, id);
+                cb(unok, pcok, id);
+            });
+
+        }
     });
 }
 
