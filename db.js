@@ -4,10 +4,10 @@
 var mysql = require('mysql');
 
 var con = mysql.createConnection({
-    host     : 'hitag-test-database.clahdngv3ody.us-east-1.rds.amazonaws.com',
-    user     : 'masteruser',
-    password : 'masterpw',
-    database : 'hitagdb'
+    host     : process.env.HOST,
+    user     : process.env.USER,
+    password : process.env.PASSWORD,
+    database : process.env.DATABASE
 });
 
 con.connect(function(err){
