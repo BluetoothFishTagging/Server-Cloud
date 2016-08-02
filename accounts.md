@@ -26,6 +26,35 @@ After they sign up, their credentials are safely stored in the database.
 
 After Users log in, they don't have to log in again as long as they maintain an active session.
 
+This is done with express-session.
+
+Example Script :
+
+```javascript
+
+// boilerplate setup above ...
+
+var session = require('express-session');
+
+app.use(session({
+	secret : 'MySecret',
+	resave : false,
+	saveUninitialized : true,
+}));
+
+app.get('/', function (req, res) {
+	if(!req.session.userid){
+		req.session.userid = 5;
+		res.end("NOW LOGGED IN");
+	}else{
+		res.end("ALREADY LOGGED IN");
+	}
+});
+
+//boilerplate setup below ...
+```
+
+
 ### Admin
 
 The Admin can view all the data present in the database.
