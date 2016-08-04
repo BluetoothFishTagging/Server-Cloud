@@ -22,6 +22,7 @@ var app = express();
 
 /* TMP_DIR */
 var tmp_dir = path.join(__dirname, 'tmp');
+var public_dir = path.join(__dirname, 'public');
 if (!fs.existsSync(tmp_dir))
     fs.mkdirSync(tmp_dir);
 
@@ -29,6 +30,7 @@ if (!fs.existsSync(tmp_dir))
 app.use(bodyparser.json());
 app.use(cookieParser());
 app.use(express.static(tmp_dir)); //statically served files
+app.use(express.static(public_dir));
 //this will be the location of the files
 
 app.use(session({
