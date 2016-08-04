@@ -19,7 +19,11 @@ var async = require('async');
 var db = require('./db');
 
 var app = express();
+
+/* TMP_DIR */
 var tmp_dir = path.join(__dirname, 'tmp');
+if (!fs.existsSync(tmp_dir))
+    fs.mkdirSync(tmp_dir);
 
 //boilerplate initialization
 app.use(bodyparser.json());
