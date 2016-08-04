@@ -62,7 +62,7 @@ See the documentation below for snippets of tips.
 
  - Node.js:
 
-   1. In your .env file, add:
+   1. To run locally, in your .env file, add:
 
       ```bash
       HOST=YOUR_DB_ENDPOINT
@@ -70,6 +70,14 @@ See the documentation below for snippets of tips.
       PASSWORD=YOUR_PASSWORD
       DATABASE=YOUR_DATABASE
       ```
+
+      To configure heroku's environment variables, run:
+
+      ```bash
+      heroku config:set $(cat .env)
+      ```
+
+      This is a shortcut for lazy people like me.
 
    2. In your server.js: 
 

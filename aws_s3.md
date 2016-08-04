@@ -23,12 +23,24 @@ See the documentation below for snippets of tips.
 
 2. [Create your credentials](http://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSGettingStartedGuide/AWSCredentials.html)
 
-3. To load your credentials, in your .env file, add:
+3. To load your credentials locally, in your .env file, add:
 
    ```bash
    AWS_ACCESS_KEY_ID=YOUR_ACCESS_KEY
    AWS_SECRET_ACCESS_KEY=YOUR_SECRET_ACCESS_KEY
    S3_BUCKET_NAME=YOUR_BUCKET_NAME
+   ```
+
+   To configure heroku, you can either do:
+
+   ```bash
+   heroku config:set AWS_ACCESS_KEY_ID=YOUR_ACCESS_KEY AWS_SECRET_ACCESS_KEY=YOUR_...
+   ```
+
+   Or, provided that your .env file is completely configured:
+
+   ```bash
+   heroku config:set $(cat .env)
    ```
 
 ## Accessing the filesystem via Node.js
