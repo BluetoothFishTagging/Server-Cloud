@@ -195,6 +195,10 @@ app.post('/upload', function (req, res) {
     });
 });
 
+function quote(s){
+	return "'" + s + "'";
+}
+
 function createUser(user, cb) {
     delete user.passcode_confirm;
     delete user.signup;
@@ -205,8 +209,10 @@ function createUser(user, cb) {
         }else{
 
 			user.passcode = "AES_ENCRYPT('"+ user.passcode + "','TunaDr3ams')";
-			
-            db.con.query('INSERT INTO persons SET ?', user, function(err,res){
+			var qstring = "INSERT INTO persons SET `username` = " + quote(user.username)
+				+ ", `passcode` = " + user.passcode;
+
+            db.con.query(qstring, function(err,res){
                 console.log(err);
                 console.log(res.insertId);
                 cb(err, res.insertId);
