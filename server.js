@@ -195,10 +195,24 @@ app.post('/upload', function (req, res) {
     });
 });
 
-function quote(s){
-	return "'" + s + "'";
+function quotewith(s, q){
+    return q + s + q;
 }
 
+function quote(s,q){
+    if(!q){
+        q = "'"; // default single quote
+    }
+    return q + s + q;
+}
+
+function buildQuery(o){
+    var s = "";
+    for(k in o) {
+        s += quote(k, '`') + ' = ' + quote(o[k], "'") + ",";
+    }
+    return s.substring(0, s.length - 1); // get rid of last comma
+}
 function createUser(user, cb) {
     delete user.passcode_confirm;
     delete user.signup;
@@ -206,11 +220,17 @@ function createUser(user, cb) {
         if(res != undefined && res.length > 0){
             cb(err,-1);
             //username already exists
+            // possibly take them to "modification" page?
         }else{
 
-			user.passcode = "AES_ENCRYPT('"+ user.passcode + "','TunaDr3ams')";
-			var qstring = "INSERT INTO persons SET `username` = " + quote(user.username)
-				+ ", `passcode` = " + user.passcode;
+			var pk = "AES_ENCRYPT('"+ user.passcode + "','TunaDr3ams')";
+            delete user.passcode;
+
+            var qstring = "INSERT INTO persons SET ";
+            qstring += buildQuery(user);
+            qstring += ", `passcode` = " + pk;
+
+            console.log(qstring);
 
             db.con.query(qstring, function(err,res){
                 console.log(err);
