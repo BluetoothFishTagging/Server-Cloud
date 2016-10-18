@@ -206,7 +206,7 @@ function quote(s,q){
     return q + s + q;
 }
 
-function buildQuery(o){
+function buildQuery(o){ // only works for string fields
     var s = "";
     for(k in o) {
         s += quote(k, '`') + ' = ' + quote(o[k], "'") + ",";
