@@ -195,7 +195,6 @@ app.post('/upload', function (req, res) {
     });
 });
 
-
 function createUser(user, cb) {
     delete user.passcode_confirm;
     delete user.signup;
@@ -204,6 +203,9 @@ function createUser(user, cb) {
             cb(err,-1);
             //username already exists
         }else{
+
+			user.passcode = "AES_ENCRYPT('"+ user.passcode + "','TunaDr3ams')";
+			
             db.con.query('INSERT INTO persons SET ?', user, function(err,res){
                 console.log(err);
                 console.log(res.insertId);
